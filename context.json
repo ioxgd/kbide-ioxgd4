@@ -1,13 +1,12 @@
 {	
-    "mcu" : "atmega328p",
-    "arch" : "AVR_UNO",
+    "mcu" : "K210",
+    "arch" : "RISC-V",
     "baudrate" : 115200,
-    "cpu_clock" : 16000000,
+    "cpu_clock" : "400000000L",
 	"cflags": [
     	"-I\"{board}/include\""
     ],
     "libflags" : [
-    	"-L\"{board}/lib\"",
-    	"-mmcu=atmega328p"
+    	
     ]
 }
