@@ -1,0 +1,20 @@
+{
+  "name": "IOXGD Library",
+  "version": "0.1.0",
+  "description": "ไลบารี่สำหรับบอร์ด IOXGD ทุกรุ่น",
+  "keywords": "GUI, K210",
+  "authors": {
+    "name":  "Sonthaya Nongnuch",
+    "url":   "https://github.com/maxpromer",
+    "maintainer": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ioxgd/IOXGD-library.git"
+  },
+  "homepage": "https://www.ioxhop.com/",
+  "export": { },
+  "frameworks": "*",
+  "platforms": "*",
+  "examples": "examples/*/*/*.ino"
+}
