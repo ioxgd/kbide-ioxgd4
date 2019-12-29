@@ -10,7 +10,7 @@ void setup() {
       // put your main code here, to run repeatedly:
 	  
     }
-  }, "mainTask", 1024, NULL, 1, NULL);
+  }, "mainTask", 32768, NULL, 1, NULL);
 
   gd.startFreeRTOS();
 }

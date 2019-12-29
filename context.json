@@ -3,14 +3,12 @@
   "arch" : "RISC-V",
   "baudrate" : 2000000,
   "cpu_clock" : "400000000L",
-	"cflags": [
+  "cflags": [
     "-I\"{board}/include\"",
     "-I\"{board}/include/IOXGD-library\"",
     "-I\"{board}/include/IOXGD-library/src\"",
     "-I\"{board}/include/lv_maixduino\"",
-    "-I\"{board}/include/lv_maixduino/src\"",
-    "-I\"{board}/include/SD\"",
-    "-I\"{board}/include/SD/src\""
+    "-I\"{board}/include/lv_maixduino/src\""
   ],
   "libflags" : [ ]
 }

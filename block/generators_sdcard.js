@@ -26,7 +26,7 @@ module.exports = function(Blockly) {
 
 #VARIABLEFile sdcard;#END
   
-    if (!SD.begin(SD_SS, SD_MOSI, SD_MISO, SD_SCK)) {
+    if (!SD.begin(29)) {
       Serial.println("initialization failed!");
       delay(1);
       return;
