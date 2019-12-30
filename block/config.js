@@ -1,11 +1,27 @@
 let buzzer = require("./menu/config.group.buzzer");
 let sdcard = require("./menu/config.group.sdcard");
+const fs = require("fs");
 
 const dirIcon = Vue.prototype.$global.board.board_info.dir;
 const {dialog} = require("electron").remote;
 
 Vue.prototype.$global.ioxgd = {
-  blocks: []
+  blocks: [],
+  component: []
+};
+
+let text2dom = (text) => new DOMParser().parseFromString(text, "text/xml").firstChild;
+
+let checkHasObject = (object_name) => {
+  return Vue.prototype.$global.ioxgd.component.filter((comp) => comp.name === object_name).length > 0;
+};
+
+let objectNameFirst = (object_name) => {
+  if (typeof object_name !== "undefined") {
+    return Vue.prototype.$global.ioxgd.component.filter((comp) => comp.name === object_name)[0].property.name;
+  } else {
+    return Vue.prototype.$global.ioxgd.component[0].property.name;
+  }
 };
 
 Vue.prototype.$global.$on("app-package-loaded", () => {
@@ -26,8 +42,104 @@ Vue.prototype.$global.$on("app-package-loaded", () => {
 
     let OpenfilePath = result[0];
 
-    console.log(OpenfilePath);
-    Vue.prototype.$global.editor.workspace.createVariable("btn2", "LVGL.Object");
+    let fileContent = fs.readFileSync(OpenfilePath);
+    let fileObject = JSON.parse(fileContent);
+    
+    Vue.prototype.$global.ioxgd.component = [];
+    let components = fileObject.page[0].component;
+    for (let [name, component] of Object.entries(components)) {
+      let objectName = component.property.name;
+      Vue.prototype.$global.editor.workspace.createVariable(objectName, `LVGL.Object.${component.name}`);
+      Vue.prototype.$global.ioxgd.component.push(component);
+    }
+    
+    Vue.prototype.$global.ioxgd.blocks = new DOMParser().parseFromString(`
+<xml>
+  <label text="Any" web-class="headline"></label>
+  <block type="object_show"></block>
+  <block type="object_hide"></block>
+${checkHasObject('Label') ? `
+  <sep gap="32"></sep>
+
+  <label text="Label" web-class="headline"></label>
+  <block type="object_set_text">
+    <field name="object">${objectNameFirst('Label')}</field>
+    <value name="text">
+        <shadow type="basic_string">
+            <field name="VALUE">Hello, IOXGD !</field>
+        </shadow>
+    </value>
+  </block>
+  ` : ''}
+  ${checkHasObject('Button') ? `
+  <sep gap="32"></sep>
+
+  <label text="Button" web-class="headline"></label>
+  <block type="object_on_click">
+    <field name="object">${objectNameFirst('Button')}</field>
+  </block>
+  <block type="object_set_text">
+    <field name="object">${objectNameFirst('Button')}</field>
+    <value name="text">
+        <shadow type="basic_string">
+            <field name="VALUE">Hello, IOXGD !</field>
+        </shadow>
+    </value>
+  </block>
+  ` : ''}
+  ${checkHasObject('LED') ? `
+  <sep gap="32"></sep>
+
+  <label text="LED" web-class="headline"></label>
+  <block type="object_led_on">
+    <field name="object">${objectNameFirst('LED')}</field>
+  </block>
+  <block type="object_led_off">
+    <field name="object">${objectNameFirst('LED')}</field>
+  </block>
+  <block type="object_led_set_bright">
+    <field name="object">${objectNameFirst('LED')}</field>
+    <value name="brightness">
+      <shadow type="math_number">
+        <field name="NUM">190</field>
+      </shadow>
+    </value>
+  </block>
+  ` : ''}
+  ${checkHasObject('Chart') ? `
+  <sep gap="32"></sep>
+
+  <label text="Chart" web-class="headline"></label>
+  ` : ''}
+  ${checkHasObject('Switch') ? `
+  <sep gap="32"></sep>
+
+  <label text="Switch" web-class="headline"></label>
+  <block type="object_on_value_changed">
+    <field name="object">${objectNameFirst('Switch')}</field>
+  </block>
+
+  <sep gap="32"></sep>
+  ` : ''}
+  ${checkHasObject('Slider') ? `
+  <label text="Slider" web-class="headline"></label>
+  <block type="object_on_value_changed">
+    <field name="object">${objectNameFirst('Slider')}</field>
+  </block>
+  <block type="object_slider_get_value">
+    <field name="object">${objectNameFirst('Slider')}</field>
+  </block>
+  <block type="object_slider_set_value">
+    <field name="object">${objectNameFirst('Slider')}</field>
+    <value name="value">
+      <shadow type="math_number">
+        <field name="NUM">50</field>
+      </shadow>
+    </value>
+  </block>
+  ` : ''}
+</xml>
+    `, "text/xml").firstChild.children;
   });
 
   Vue.prototype.$global.editor.workspace.registerToolboxCategoryCallback('getObjectBlocks', () => {
@@ -41,11 +153,9 @@ Vue.prototype.$global.$on("app-package-loaded", () => {
     button.setAttribute("callbackKey", "importDesignerProject");
     xmlList.push(button);
 
-    for (block_name of Vue.prototype.$global.ioxgd.blocks) {
-      var block = document.createElement("block");
-      block.setAttribute("type", block_name);
-      xmlList.push(block);
-    }
+    xmlList = xmlList.concat(...Vue.prototype.$global.ioxgd.blocks);
+
+    console.log(xmlList);
     
     return xmlList;
   });
