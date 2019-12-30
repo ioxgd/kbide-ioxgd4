@@ -231,6 +231,62 @@ module.exports = {
         "rtc_get_month",
         "rtc_get_year"
       ]
+    }, {
+      name : 'WiFi',
+      index : 30,
+      icon : '/static/icons/icons8_wifi_router_96px.png',
+      blocks : [
+        'wifi_connect',    
+        {
+          xml : 
+            `<block type="wifi_http_get">
+              <value name="url">
+                <shadow type="basic_string">
+                  <field name="VALUE">https://www.ioxgd.com/</field>
+                </shadow>
+              </value>
+            </block>`
+        },
+        {
+          xml : 
+            `<block type="wifi_http_post">
+              <value name="url">
+                <shadow type="basic_string">
+                  <field name="VALUE">https://www.ioxgd.com/</field>
+                </shadow>
+              </value>
+              <value name="data">
+                <shadow type="basic_string">
+                  <field name="VALUE">Hello !</field>
+                </shadow>
+              </value>
+            </block>`
+        },                
+        // 'wifi_get_ip_addr',
+      ]
+    },
+    {
+      name : 'Bluetooth',
+      index : 40,
+      icon : '/static/icons/icons8_bluetooth_2_96px.png',
+      blocks : [
+        'bt_start',
+        {
+          xml : 
+            `<block type="bt_send_string">
+              <value name="text">
+                <shadow type="basic_string">
+                  <field name="VALUE">Hello !</field>
+                </shadow>
+              </value>
+            </block>`
+        },
+        'bt_on_receive',
+        'bt_read_data',
+        'bt_read_line'
+      ]
     }
+    
+    
   ]
 };
