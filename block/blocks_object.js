@@ -12,6 +12,17 @@ module.exports = function(Blockly) {
         return list;
     };
 
+    Blockly.Blocks['object_load_page'] = {
+        init: function() {
+            this.appendDummyInput()
+                .appendField("Load page design");
+            this.setColour(285);
+            this.setTooltip("");
+            this.setHelpUrl("");
+            this.setDeletable(false);
+        }
+    };
+
     Blockly.Blocks['object_on_click'] = {
         init: function() {
             this.appendDummyInput()

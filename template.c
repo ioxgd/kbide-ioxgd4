@@ -11,12 +11,11 @@ ${VARIABLE}
 ${FUNCTION}
 
 void setup() {
-  ${SETUP_CODE}
-  ${BLOCKSETUP}
-  
   gd.begin();
   
   xTaskCreate([](void*) {
+    ${SETUP_CODE}
+    ${BLOCKSETUP}
     while (1) {
       ${LOOP_CODE}
       ${LOOP_EXT_CODE}

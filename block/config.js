@@ -1,6 +1,11 @@
 let buzzer = require("./menu/config.group.buzzer");
 let sdcard = require("./menu/config.group.sdcard");
 const fs = require("fs");
+const path = require('path');
+const { promisify } = require('util');
+const ioxgd_codegen = require("../ioxgd/codegen");
+
+const writeFileAsync = promisify(fs.writeFile);
 
 const dirIcon = Vue.prototype.$global.board.board_info.dir;
 const {dialog} = require("electron").remote;
@@ -48,8 +53,6 @@ Vue.prototype.$global.$on("app-package-loaded", () => {
     Vue.prototype.$global.ioxgd.component = [];
     let components = fileObject.page[0].component;
     for (let [name, component] of Object.entries(components)) {
-      let objectName = component.property.name;
-      Vue.prototype.$global.editor.workspace.createVariable(objectName, `LVGL.Object.${component.name}`);
       Vue.prototype.$global.ioxgd.component.push(component);
     }
     
@@ -140,12 +143,30 @@ ${checkHasObject('Label') ? `
   ` : ''}
 </xml>
     `, "text/xml").firstChild.children;
+    
+    let allBlocks = Vue.prototype.$global.editor.workspace.getAllBlocks();
+    if (!allBlocks.find(x => x.type === 'object_load_page')) {
+      // Add load page block to workspace
+      var loadPageBlock = Vue.prototype.$global.editor.workspace.newBlock('object_load_page');
+      loadPageBlock.initSvg();
+      loadPageBlock.render();
+    }
+
+    // Update toolbox
+    Vue.prototype.$global.editor.workspace.getToolbox().refreshSelection();
+    
+    // Gen code into include dir
+    ioxgd_codegen(OpenfilePath).then(async (code) => {
+      let cppout = path.resolve(`${__dirname}/../include/codegen/design.cpp`);
+      await writeFileAsync(cppout, `#include "lvgl.h"\n\n${code.header}\n\nvoid loadPage(){\n${code.code}\n}`);
+      console.log("Write file !")
+    });
   });
 
   Vue.prototype.$global.editor.workspace.registerToolboxCategoryCallback('getObjectBlocks', () => {
     const Blockly = Vue.prototype.$global.editor.Blockly;
 
-    console.log("Reload");
+    // console.log("Reload");
     var xmlList = [];
 
     var button = document.createElement("button");
@@ -155,7 +176,7 @@ ${checkHasObject('Label') ? `
 
     xmlList = xmlList.concat(...Vue.prototype.$global.ioxgd.blocks);
 
-    console.log(xmlList);
+    // console.log(xmlList);
     
     return xmlList;
   });
