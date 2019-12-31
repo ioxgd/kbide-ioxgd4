@@ -448,9 +448,9 @@ module.exports = async (file) => {
                 // Repalce Include
                 const data = await readFileAsync(output, 'utf8');
                 var result = data.replace(/#include \"lvgl\/lvgl.h\"/g, '#include "lvgl.h"');
-                writeFileAsync(output, result, 'utf8');
-
-                console.log(`${font.name} convarted`);
+                writeFileAsync(output, result, 'utf8').then(() => {
+                  console.log(`${font.name} convarted`);
+                });
             });
             
         } catch(e) {
@@ -474,5 +474,7 @@ module.exports = async (file) => {
     }
     // ----- END of Componant Convart ----- //
 
-    return { header, code };
+    let cppout = path.resolve(`${__dirname}/../include/codegen/design.cpp`);
+    await writeFileAsync(cppout, `#include "lvgl.h"\n\n${code.header}\n\nvoid loadPage(){\n${code.code}\n}`);
+    console.log("design.cpp write ok.");
 };
