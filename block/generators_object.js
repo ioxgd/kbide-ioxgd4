@@ -51,27 +51,22 @@ let md5file = (file) => new Promise((resolve, reject) => {
 GB.ioxgd.check_designfile_update = async () => {
     let hash = await md5file(GB.ioxgd.designfile);
     if (hash !== GB.ioxgd.designfile_md5 && GB.ioxgd.designfile_md5.length > 0) {
-        await (new Promise((resolve, reject) => {
-            // Ask user update file
-            Vue.prototype.$dialog.confirm({
-                text: 'Design file are update. Are you want to update Blocks ?',
-                title: 'IOXGD Notify',
-                actions: {
-                    false: {
-                        text: 'Next time',
-                        handle: resolve
-                    },
-                    true: {
-                        color: 'green',
-                        text: 'Update Now',
-                        handle: () => {
-                            GB.$emit("ioxgd-reload-design-file");
-                            resolve();
-                        }
-                    }
+        // Ask user update file
+        let res = await Vue.prototype.$dialog.confirm({
+            text: 'Design file are update. Are you want to update Blocks ?',
+            title: 'IOXGD Notify',
+            actions: {
+                false: 'Next time',
+                true: {
+                    color: 'green',
+                    text: 'Update Now'
                 }
-            });
-        }));
+            }
+        });
+        if (res) {
+            GB.$emit("ioxgd-reload-design-file");
+            return;
+        }
     }
     GB.ioxgd.designfile_md5 = hash;
 
