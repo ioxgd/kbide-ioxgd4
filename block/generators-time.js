@@ -1,115 +1,62 @@
 module.exports = function(Blockly){
-'use strict';
+	Blockly.JavaScript['rtc_set_datetime'] = function (block) {
+		var dropdown_year = block.getFieldValue('YEAR');
+		var dropdown_month = block.getFieldValue('MONTH');
+		var dropdown_day = block.getFieldValue('DAY');
+		var dropdown_hour = block.getFieldValue('HOUR');
+		var dropdown_minute = block.getFieldValue('MINUTE');
+		var dropdown_secound = block.getFieldValue('SECOND');
+		var code = `RTC.setTime(${dropdown_hour}, ${dropdown_minute}, ${dropdown_secound}, ${dropdown_day}, ${dropdown_month}, ${dropdown_year});\n`;
+		return code;
+	};
 
-Blockly.JavaScript['rtc_set_datetime'] = function (block) {
-	var dropdown_dayofweek= block.getFieldValue('DOW');
-	var dropdown_year = block.getFieldValue('YEAR');
-	var dropdown_month = block.getFieldValue('MONTH');
-	var dropdown_day = block.getFieldValue('DAY');
-	var dropdown_hour = block.getFieldValue('HOUR');
-	var dropdown_minute = block.getFieldValue('MINUTE');
-	var dropdown_secound = block.getFieldValue('SECOND');
-	var code = `rtc.setDateTime(${dropdown_secound}, ${dropdown_minute}, ${dropdown_hour}, ${dropdown_dayofweek}, ${dropdown_day}, ${dropdown_month}, ${dropdown_year});\n`;
-	return code;
-};
+	let getTimeBeforeUse = `
+	#FUNCTION
+	int getTimeFromRTC(uint8_t inx) {
+		static uint32_t last_update = 0;
+		if ((last_update == 0) || (millis() > (last_update + 100))) {
+			if (!RTC.get()) {
+				Serial.println("Read time from RTC error!");
+			}
+			last_update = millis();
+		}
+		if (inx == 1) return RTC.hour();
+		if (inx == 2) return RTC.minute();
+		if (inx == 3) return RTC.second();
+		if (inx == 4) return RTC.day();
+		if (inx == 5) return RTC.month();
+		if (inx == 6) return RTC.year();
+		return 0;
+	}
+	#END
+	`;
 
-Blockly.JavaScript['rtc_get_dayOfWeek'] = function (block) {
-	var code = `rtc.getDayofWeek()`;
-	return [code, Blockly.JavaScript.ORDER_NONE];
-};
+	Blockly.JavaScript['rtc_get_hour'] = function (block) {
+		var code = `${getTimeBeforeUse}getTimeFromRTC(1)`;
+		return [code, Blockly.JavaScript.ORDER_NONE];
+	};
 
+	Blockly.JavaScript['rtc_get_minute'] = function (block) {
+		var code = `${getTimeBeforeUse}getTimeFromRTC(2)`;
+		return [code, Blockly.JavaScript.ORDER_NONE];
+	};
 
-Blockly.JavaScript['rtc_get_hour'] = function (block) {
-	var code = `rtc.getHour()`;
-	return [code, Blockly.JavaScript.ORDER_NONE];
-};
+	Blockly.JavaScript['rtc_get_second'] = function (block) {
+		var code = `${getTimeBeforeUse}getTimeFromRTC(3)`;
+		return [code, Blockly.JavaScript.ORDER_NONE];
+	};
 
-Blockly.JavaScript['rtc_get_minute'] = function (block) {
-	var code = `rtc.getMinute()`;
-	return [code, Blockly.JavaScript.ORDER_NONE];
-};
+	Blockly.JavaScript['rtc_get_day'] = function (block) {
+		var code = `${getTimeBeforeUse}getTimeFromRTC(4)`;
+		return [code, Blockly.JavaScript.ORDER_NONE];
+	};
 
-Blockly.JavaScript['rtc_get_second'] = function (block) {
-	var code = `rtc.getSecond()`;
-	return [code, Blockly.JavaScript.ORDER_NONE];
-};
-
-Blockly.JavaScript['rtc_get_day'] = function (block) {
-	var code = `rtc.getDay()`;
-	return [code, Blockly.JavaScript.ORDER_NONE];
-};
-
-Blockly.JavaScript['rtc_get_month'] = function (block) {
-	var code = `rtc.getMonth()`;		
-	return [code, Blockly.JavaScript.ORDER_NONE];
-};
-Blockly.JavaScript['rtc_get_year'] = function (block) {
-	var code = `rtc.getYear()`;	
-	return [code, Blockly.JavaScript.ORDER_NONE];
-};
-
-// =============================================================================
-// not support rtc yet
-// =============================================================================
-/*Blockly.JavaScript['rtc_get'] = function(block) {
-	return [
-		'mcp7940n.get_datetime()',
-		Blockly.JavaScript.ORDER_ATOMIC
-	];
-};
-Blockly.JavaScript['rtc_get_date'] = function(block) {
-	return [
-		'mcp7940n.get_date()',
-		Blockly.JavaScript.ORDER_ATOMIC
-	];
-};
-Blockly.JavaScript['rtc_get_time'] = function(block) {
-	return [
-		'mcp7940n.get_time()',
-		Blockly.JavaScript.ORDER_ATOMIC
-	];
-};
-Blockly.JavaScript['rtc_get_day'] = function(block) {
-	return [
-		'mcp7940n.get(0)',
-		Blockly.JavaScript.ORDER_ATOMIC
-	];
-};
-Blockly.JavaScript['rtc_get_month'] = function(block) {
-	return [
-		'mcp7940n.get(1)',
-		Blockly.JavaScript.ORDER_ATOMIC
-	];
-};
-Blockly.JavaScript['rtc_get_year'] = function(block) {
-	return [
-		'mcp7940n.get(2)',
-		Blockly.JavaScript.ORDER_ATOMIC
-	];
-};
-Blockly.JavaScript['rtc_get_hour'] = function(block) {
-	return [
-		'mcp7940n.get(3)',
-		Blockly.JavaScript.ORDER_ATOMIC
-	];
-};
-Blockly.JavaScript['rtc_get_minute'] = function(block) {
-	return [
-		'mcp7940n.get(4)',
-		Blockly.JavaScript.ORDER_ATOMIC
-	];
-};
-Blockly.JavaScript['rtc_get_second'] = function(block) {
-	return [
-		'mcp7940n.get(5)',
-		Blockly.JavaScript.ORDER_ATOMIC
-	];
-};
-Blockly.JavaScript['rtc_cal'] = function(block) {
-	return 'mcp7940n.cal(' + block.getFieldValue('VALUE') + ');\n';
-};
-Blockly.JavaScript['rtc_cal_coarse'] = function(block) {
-	return 'mcp7940n.cal_coarse(' + block.getFieldValue('VALUE') + ');\n';
-};
-*/
+	Blockly.JavaScript['rtc_get_month'] = function (block) {
+		var code = `${getTimeBeforeUse}getTimeFromRTC(5)`;		
+		return [code, Blockly.JavaScript.ORDER_NONE];
+	};
+	Blockly.JavaScript['rtc_get_year'] = function (block) {
+		var code = `${getTimeBeforeUse}getTimeFromRTC(6)`;	
+		return [code, Blockly.JavaScript.ORDER_NONE];
+	};
 };

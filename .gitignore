@@ -1,1 +1,3 @@
 build/*
+include/codegen/*.cpp
+include/codegen/*.c

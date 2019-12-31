@@ -54,7 +54,7 @@ module.exports = function(Blockly) {
     Blockly.JavaScript['object_set_text'] = function(block) {
         var dropdown_object = block.getFieldValue('object');
         var value_name = Blockly.JavaScript.valueToCode(block, 'text', Blockly.JavaScript.ORDER_ATOMIC);
-        var code = `${defineObject(dropdown_object)}\n lv_label_set_text(${dropdown_object}, String(${value_name}).c_str());\n`;
+        var code = `${defineObject(dropdown_object)}\n lv_label_set_text(${dropdown_object}, String(${value_name}).c_str()); lv_obj_realign(${dropdown_object});\n`;
         return code;
     };
 
@@ -101,7 +101,7 @@ module.exports = function(Blockly) {
         var dropdown_object = block.getFieldValue('object');
         var code = `${defineObject(dropdown_object)}\n lv_sw_get_state(${dropdown_object})`;
         return [code, Blockly.JavaScript.ORDER_NONE];
-      };
+    };
 
       Blockly.JavaScript['object_switch_on'] = function(block) {
         var dropdown_object = block.getFieldValue('object');

@@ -11,7 +11,11 @@ ${VARIABLE}
 ${FUNCTION}
 
 void setup() {
+  Serial.begin(115200);
+
   gd.begin();
+  ESP32.begin();
+  RTC.begin();
   
   xTaskCreate([](void*) {
     ${SETUP_CODE}

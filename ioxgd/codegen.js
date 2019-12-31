@@ -459,6 +459,13 @@ module.exports = async (file) => {
     }
     // ----- END of Font Convart ----- //
 
+    code += "static lv_style_t style_screen;\n";
+    code += "lv_style_copy(&style_screen, &lv_style_plain);\n";
+    code += `style_screen.body.main_color = lv_color_hex(0x${gdContent.page[0].background.main_color.substring(1)});\n`;
+    code += `style_screen.body.grad_color = lv_color_hex(0x${gdContent.page[0].background.grad_color.substring(1)});\n`;
+    code += "lv_obj_set_style(lv_scr_act(), &style_screen);\n"
+    code += "\n";
+
     // ----- Componant Convart ----- //
     for (let [name, component] of Object.entries(gdContent.page[0].component)) {
         compCode = await build[component.name].bind(component)();

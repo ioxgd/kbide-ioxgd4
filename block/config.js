@@ -157,6 +157,9 @@ ${checkHasObject('Label') ? `
     
     // Gen code into include dir
     ioxgd_codegen(OpenfilePath).then(async (code) => {
+      if (!fs.existsSync(`${__dirname}/../include/codegen`)) {
+        fs.mkdirSync(`${__dirname}/../include/codegen`);
+      }
       let cppout = path.resolve(`${__dirname}/../include/codegen/design.cpp`);
       await writeFileAsync(cppout, `#include "lvgl.h"\n\n${code.header}\n\nvoid loadPage(){\n${code.code}\n}`);
       console.log("Write file !")
@@ -236,7 +239,19 @@ module.exports = {
       index : 30,
       icon : '/static/icons/icons8_wifi_router_96px.png',
       blocks : [
+        {
+          xml:
+            `<label text="WiFi Connect" web-class="headline"></label>`
+        },
         'wifi_connect',    
+        'wifi_is_connected',
+        {
+          xml:
+            `<sep gap="32"></sep>
+
+            <label text="HTTP Client" web-class="headline"></label>
+            `
+        },
         {
           xml : 
             `<block type="wifi_http_get">
@@ -262,7 +277,39 @@ module.exports = {
               </value>
             </block>`
         },                
-        // 'wifi_get_ip_addr',
+        {
+          xml:
+            `<sep gap="32"></sep>
+
+            <label text="TCP Client" web-class="headline"></label>
+            `
+        },
+        'tcp_connect',
+        'tcp_is_connected',
+        'tcp_send_string',
+        'tcp_on_receive',
+        'tcp_read_data',
+        'tcp_read_line',
+        {
+          xml:
+            `<sep gap="32"></sep>
+
+            <label text="UDP" web-class="headline"></label>
+            `
+        },
+        'udp_begin',
+        'udp_send_string',
+        'udp_on_receive',
+        'udp_read_data',
+        'udp_read_line',
+        {
+          xml:
+            `<sep gap="32"></sep>
+
+            <label text="Internet Time (NTP)" web-class="headline"></label>
+            `
+        },
+        'ntp_sync_rtc'
       ]
     },
     {
