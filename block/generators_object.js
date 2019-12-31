@@ -4,6 +4,8 @@ const { promisify } = require('util');
 const { dialog } = require("electron").remote;
 const ioxgd_codegen = require("../ioxgd/codegen");
 
+const engine = Vue.prototype.$engine;
+
 const writeFileAsync = promisify(fs.writeFile);
 
 const GB = Vue.prototype.$global;
@@ -173,7 +175,13 @@ module.exports = function(Blockly) {
         return xmlList;
     });
 
-    // ----- Blocks ----- //
+    // ----- Delete old file -----  //
+    let oldFiles = engine.util.walk(`${__dirname}/../include/codegen`).filter(f => ['.c' , '.cpp'].indexOf(path.extname(f)) >= 0);
+    for (let file of oldFiles) {
+        fs.unlink(file, () => console.info(`delete ${file}`));
+    }
+
+    // ----- Blocks -----  //
     let defineObject = (name) => `#VARIABLEextern lv_obj_t *${name};#END`;
 
     Blockly.JavaScript['object_load_page'] = function(block) {
