@@ -475,6 +475,13 @@ module.exports = async (file) => {
     // ----- END of Componant Convart ----- //
 
     let cppout = path.resolve(`${__dirname}/../include/codegen/design.cpp`);
-    await writeFileAsync(cppout, `#include "lvgl.h"\n\n${code.header}\n\nvoid loadPage(){\n${code.code}\n}`);
+    await writeFileAsync(cppout, `
+#include "lvgl.h"
+    
+${header}
+    
+void loadPage(){
+  ${code}
+}`);
     console.log("design.cpp write ok.");
 };
