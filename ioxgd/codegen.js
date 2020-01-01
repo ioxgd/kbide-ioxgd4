@@ -415,7 +415,7 @@ let build = {
 
 module.exports = async (file, cb) => {
     if (file.file) {
-        gdContent = JSON.parse(fs.readFileSync(file));
+        gdContent = JSON.parse(fs.readFileSync(file.file));
     } else if (file.content) {
         gdContent = JSON.parse(file.content);
     }

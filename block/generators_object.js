@@ -315,9 +315,11 @@ GB.$once('app-package-loaded', () => {
         console.log('Client closed');
         // setTimeout(connectToIOXGDDesigner, 10000);
 
+        /*
         if (!GB.ioxgd.socket.ask_user_when_disconnect) {
             return;
         }
+        */
 
         // Ask user import file
         Vue.prototype.$dialog.confirm({
