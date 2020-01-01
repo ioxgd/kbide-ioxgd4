@@ -3,6 +3,7 @@ const path = require('path');
 const { promisify } = require('util');
 const crypto = require('crypto');
 const { dialog } = require("electron").remote;
+const net = require('net');
 const ioxgd_codegen = require("../ioxgd/codegen");
 
 const engine = Vue.prototype.$engine;
@@ -74,13 +75,18 @@ GB.ioxgd.check_designfile_update = async () => {
     GB.ioxgd.check_designfile_update_timer = setTimeout(GB.ioxgd.check_designfile_update, 1000);
 };
 
-GB.$on('ioxgd-reload-design-file', async () => {
+GB.$on('ioxgd-reload-design-file', async (content) => {
     // Stop timer
     clearTimeout(GB.ioxgd.check_designfile_update_timer);
     GB.ioxgd.designfile_md5 = "";
 
-    let fileContent = fs.readFileSync(GB.ioxgd.designfile);
-    let fileObject = JSON.parse(fileContent);
+    let designContent = "";
+    if (!content) {
+        designContent = fs.readFileSync(GB.ioxgd.designfile);
+    } else {
+        designContent = content;
+    }
+    let fileObject = JSON.parse(designContent);
     
     GB.ioxgd.component = [];
     let components = fileObject.page[0].component;
@@ -90,9 +96,11 @@ GB.$on('ioxgd-reload-design-file', async () => {
     
     GB.ioxgd.blocks = new DOMParser().parseFromString(`
 <xml>
+${GB.ioxgd.component.length > 0 ? `
   <label text="Any" web-class="headline"></label>
-  <block type="object_show"></block>
-  <block type="object_hide"></block>
+  <block type="object_show">${objectNameFirst()}</block>
+  <block type="object_hide">${objectNameFirst()}</block>
+  ` : ''}
 ${checkHasObject('Label') ? `
   <sep gap="32"></sep>
 
@@ -188,10 +196,24 @@ ${checkHasObject('Label') ? `
     GB.editor.workspace.getToolbox().refreshSelection();
     
     // Gen code into include dir
-    ioxgd_codegen(GB.ioxgd.designfile);
+    ioxgd_codegen(content ? { content: content } : { file: GB.ioxgd.designfile}, (err, msg) => {
+        if (err) {
+            this.$dialog.notify.error(msg, {
+                position: 'top-right',
+                timeout: 5000
+            })
+        } else {
+            GB.$dialog.notify.success(msg, {
+                position: 'top-right',
+                timeout: 5000
+            });
+        }
+    });
 
-    // Start timer
-    GB.ioxgd.check_designfile_update();
+    // Start timer chack file update
+    if (!content) {
+        GB.ioxgd.check_designfile_update();
+    }
 });
 
 let importButton = async () => {
@@ -214,21 +236,116 @@ let importButton = async () => {
     GB.$emit("ioxgd-reload-design-file");
 }
 
+let stringifyData = (evant, data) => `evant: ${evant}\ndata: ${Buffer.from(data).toString('base64')}\n\n`;
+
+let parseData = (data) => {
+    try {
+        let parse = /^evant: (.*)\ndata: (.*)\n\n$/gm.exec(data);
+        return { evant: parse[1], data: Buffer.from(parse[2], 'base64').toString('utf-8') };
+    } catch (err) {
+        throw "data parse error";
+    }
+}
+
+let connectToIOXGDDesigner = () => {
+    GB.ioxgd.socket.ask_user_when_disconnect = false;
+    GB.ioxgd.socket.destroy();
+
+    GB.ioxgd.socket.connect(12123);
+}
+
 // when page loaded
-GB.$once('board-package-loaded', () => {
-    // Ask user import file
-    Vue.prototype.$dialog.confirm({
-        text: 'Please import a design file for program GUI via Blocks.',
-        title: 'IOXGD Notify',
-        actions: {
-            false: 'Next time',
-            true: {
-                color: 'green',
-                text: 'Import Now',
-                handle: importButton
+GB.$once('app-package-loaded', () => {
+    GB.ioxgd.socket = new net.Socket();
+    GB.ioxgd.socket.setTimeout(100);
+
+    GB.ioxgd.socket.on('connect', async (data) => {    
+        console.log('Connected to IOXGD Designer via TCP');
+        // Ask user import file
+        let res = await Vue.prototype.$dialog.confirm({
+            text: 'Found IOXGD Designer running, Are you want to import design from IOXGD Designer ?',
+            title: 'IOXGD Notify',
+            actions: {
+                false: 'No',
+                true: {
+                    color: 'green',
+                    text: 'Import Now'
+                }
             }
+        });
+        if (res) {
+            GB.ioxgd.socket.write(stringifyData("i-want-page-data", ''));
+            GB.ioxgd.socket.ask_user_when_disconnect = true;
+            GB.ioxgd.socket.ask_user_when_update = false;
         }
     });
+    
+    GB.ioxgd.socket.on('data', async (rawData) => {    
+        console.log('Client received data');
+        let { evant, data } = parseData(rawData.toString());
+        if (evant === 'page-data-update') {
+            if (GB.ioxgd.socket.ask_user_when_update_waiting) {
+                return;
+            }
+            if (GB.ioxgd.socket.ask_user_when_update) {
+                GB.ioxgd.socket.ask_user_when_update_waiting = true;
+                let res = await Vue.prototype.$dialog.confirm({
+                    text: 'Design are update. Are you want to update Blocks ?',
+                    title: 'IOXGD Notify',
+                    actions: {
+                        false: 'Next time',
+                        true: {
+                            color: 'green',
+                            text: 'Update Now'
+                        }
+                    }
+                });
+                GB.ioxgd.socket.ask_user_when_update_waiting = false;
+                if (!res) {
+                    return;
+                }
+            }
+        
+            GB.$emit("ioxgd-reload-design-file", data);
+            GB.ioxgd.socket.ask_user_when_update = true;
+        }
+    });
+
+    GB.ioxgd.socket.on('close', () => {
+        console.log('Client closed');
+        // setTimeout(connectToIOXGDDesigner, 10000);
+
+        if (!GB.ioxgd.socket.ask_user_when_disconnect) {
+            return;
+        }
+
+        // Ask user import file
+        Vue.prototype.$dialog.confirm({
+            text: 'Not found IOXGD Designer running, Please import a design file for program GUI via Blocks.',
+            title: 'IOXGD Notify',
+            actions: {
+                false: 'Next time',
+                true: {
+                    color: 'green',
+                    text: 'Import Now',
+                    handle: importButton
+                }
+            }
+        });
+    });
+     
+    GB.ioxgd.socket.on('error', (err) => {
+        console.error(err);
+    });
+
+    connectToIOXGDDesigner();
+});
+
+GB.$on('editor-mode-change', () => {
+    GB.ioxgd.component = [];
+    if (GB.editor.mode < 3) {
+        connectToIOXGDDesigner();
+    }
 });
 
 module.exports = function(Blockly) {

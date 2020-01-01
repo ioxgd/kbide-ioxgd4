@@ -413,8 +413,13 @@ let build = {
     }
 };
 
-module.exports = async (file) => {
-    gdContent = JSON.parse(fs.readFileSync(file));
+module.exports = async (file, cb) => {
+    if (file.file) {
+        gdContent = JSON.parse(fs.readFileSync(file));
+    } else if (file.content) {
+        gdContent = JSON.parse(file.content);
+    }
+    if (!cb) cb = () => { };
 
     let header = "", code = "";
     
@@ -429,11 +434,13 @@ module.exports = async (file) => {
         try {
             let output = path.resolve(`${__dirname}\\..\\include\\codegen\\${font.name}.c`);
             if (fs.existsSync(output)) {
-                console.log(`${font.name} use old file`);
+                console.log(`${font.name} use cache file`);
+                cb(false, `${font.name} use cache file.`);
                 continue;
             }
             if (!fs.existsSync(font.file)) {
                 dialog.showErrorBox('Oops! Something went wrong!', `${font.name} can't convert to C array, ${font.file} not found.`);
+                cb(true, `${font.name} can't convert to C array, ${font.file} not found.`);
                 continue;
             }
             let cmd = `"${__dirname}\\bin\\lv_font_conv_v0.3.1_x64.exe" --font "${font.file}" --bpp 4 --size ${font.size} -r ${font.range} --format lvgl --no-compress -o "${output}"`;
@@ -442,6 +449,7 @@ module.exports = async (file) => {
             execShellCommand(cmd).then(async (stdout, stderr) => {
                 if (stderr) {
                     dialog.showErrorBox('Oops! Something went wrong!', `${font.name} can't convert to C array, ${stderr}`);
+                    cb(true, `${font.name} can't convert to C array, ${stderr}`);
                     return;
                 }
 
@@ -450,6 +458,7 @@ module.exports = async (file) => {
                 var result = data.replace(/#include \"lvgl\/lvgl.h\"/g, '#include "lvgl.h"');
                 writeFileAsync(output, result, 'utf8').then(() => {
                   console.log(`${font.name} convarted`);
+                  cb(false, `${font.name} convarted`);
                 });
             });
             
@@ -484,4 +493,5 @@ void loadPage(){
   ${code}
 }`);
     console.log("design.cpp write ok.");
+    cb(false, `design.cpp write ok.`);
 };
