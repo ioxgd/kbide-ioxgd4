@@ -42,12 +42,18 @@ let fileDownload = (url, dest) => {
         http.get(url, function(response) {
             response.pipe(file);
             file.on('finish', () => {
-                file.close(resolve);
-                resolve();
+                file.close(() => {
+                    if (process.platform === 'darwin' || process.platform === 'linux') {
+                        fs.chmodSync(dest, '755');
+                    }
+                    resolve();
+                });
             });
         }).on('error', (err) => {
-            fs.unlink(dest);
-            reject(err.message);
+            file.close(() => {
+                fs.unlink(dest);
+                reject(err.message);
+            });
         });
     });
 }
