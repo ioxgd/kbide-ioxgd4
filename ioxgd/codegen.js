@@ -14,14 +14,14 @@ var gdContent;
 var lv_font_conv = `${__dirname}/bin/`;
 if (process.platform === 'win32') {
     if (process.arch === 'x64') {
-        lv_font_conv += 'lv_font_conv_v0.4.1_x64.exe';
+        lv_font_conv += 'lv_font_conv_v0.3.1_x64.exe';
     } else {
-        lv_font_conv += 'lv_font_conv_v0.4.1_x86.exe';
+        lv_font_conv += 'lv_font_conv_v0.3.1_x86.exe';
     }
 } else if (process.platform === 'darwin') {
-    lv_font_conv += 'lv_font_conv_v0.4.1_darwin';
+    lv_font_conv += 'lv_font_conv_v0.3.1_darwin';
 } else if (process.platform === 'linux') {
-    lv_font_conv += 'lv_font_conv_v0.4.1_linux';
+    lv_font_conv += 'lv_font_conv_v0.3.1_linux';
 }
 lv_font_conv = path.resolve(lv_font_conv);
 
@@ -454,7 +454,7 @@ module.exports = async (file, cb) => {
     if (!fs.existsSync(lv_font_conv)) {
         console.log('Downloading font converter');
         cb(false, `Downloading font converter`);
-        await fileDownload(`http://dl.ioxgd.com/lv_font_conv-0.4.1/${path.basename(lv_font_conv)}`, lv_font_conv);
+        await fileDownload(`http://dl.ioxgd.com/lv_font_conv-0.3.1/${path.basename(lv_font_conv)}`, lv_font_conv);
         cb(false, `Downloaded font converter`);
         console.log('Downloaded font converter');
     }
