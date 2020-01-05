@@ -487,9 +487,26 @@ module.exports = async (file, cb) => {
                 continue;
             }
             if (!fs.existsSync(font.file)) {
-                dialog.showErrorBox('Oops! Something went wrong!', `${font.name} can't convert to C array, ${font.file} not found.`);
-                cb(true, `${font.name} can't convert to C array, ${font.file} not found.`);
-                continue;
+                let result;
+                result = await dialog.showMessageBox({
+                    type: 'error',
+                    title: `${path.basename(font.file)} not found`,
+                    message: `font ${path.basename(font.file)} not found, please select ${path.basename(font.file)} font.`
+                });
+
+                result = await dialog.showOpenDialog({
+                    title: `Select file ${path.basename(font.file)}`,
+                    properties: [ 'openFile' ],
+                    filters: [
+                    { name: 'Font', extensions: ['ttf'] }
+                    ]
+                });
+
+                if (!result) {
+                    return;
+                }
+
+                font.file = result[0];
             }
             let cmd = `"${lv_font_conv}" --font "${font.file}" --bpp 4 --size ${font.size} -r ${font.range} --format lvgl --no-compress -o "${output}"`;
             // await execShellCommand(cmd);
@@ -511,6 +528,7 @@ module.exports = async (file, cb) => {
             });
             
         } catch(e) {
+            console.error(e);
             dialog.showErrorBox('Oops! Something went wrong!', `${font.name} can't convert to C array`);
         }
     }
