@@ -475,6 +475,10 @@ module.exports = async (file, cb) => {
 
         header += `LV_FONT_DECLARE(${font.name});\n`;
 
+        if (!path.isAbsolute(font.file)) {
+            font.file = path.resolve(path.join(path.dirname(file.file), font.file));
+        }
+
         try {
             let output = path.resolve(`${__dirname}/../include/codegen/${font.name}.c`);
             if (fs.existsSync(output)) {
