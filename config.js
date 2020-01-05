@@ -8,5 +8,5 @@ module.exports = {
   email: "max30012540@hotmail.com",
   git: "https://github.com/ioxgd/kbide-ioxgd4/",
   image: "/static/display.png",
-  version: "1.0.0"
+  version: "1.0.1"
 };

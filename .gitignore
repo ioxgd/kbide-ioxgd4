@@ -1,3 +1,4 @@
 build/*
 include/codegen/*.cpp
 include/codegen/*.c
+/ioxgd/bin/lv_font_conv_*

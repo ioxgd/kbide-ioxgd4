@@ -4,21 +4,57 @@ const dialog = remote.dialog;
 const fs = require("fs");
 const path = require('path');
 const { promisify } = require('util');
-
+const http = require('http');
 
 const writeFileAsync = promisify(fs.writeFile);
 const readFileAsync = promisify(fs.readFile);
 
 var gdContent;
 
+var lv_font_conv = `${__dirname}/bin/`;
+if (process.platform === 'win32') {
+    if (process.arch === 'x64') {
+        lv_font_conv += 'lv_font_conv_v0.3.1_x64.exe';
+    } else {
+        lv_font_conv += 'lv_font_conv_v0.3.1_x86.exe';
+    }
+} else if (process.platform === 'darwin') {
+    lv_font_conv += 'lv_font_conv_v0.3.1_darwin';
+} else if (process.platform === 'linux') {
+    lv_font_conv += 'lv_font_conv_v0.3.1_linux';
+}
+lv_font_conv = path.resolve(lv_font_conv);
+
 function execShellCommand(cmd) {
     return new Promise((resolve, reject) => {
-      exec(cmd, (error, stdout, stderr) => {
-        if (error) {
-           console.warn(error);
-        }
-        resolve(stdout, stderr);
-      });
+        exec(cmd, (error, stdout, stderr) => {
+            if (error) {
+            console.warn(error);
+            }
+            resolve(stdout, stderr);
+        });
+    });
+}
+
+let fileDownload = (url, dest) => {
+    let file = fs.createWriteStream(dest);
+    return new Promise((resolve, reject) => {
+        http.get(url, function(response) {
+            response.pipe(file);
+            file.on('finish', () => {
+                file.close(() => {
+                    if (process.platform === 'darwin' || process.platform === 'linux') {
+                        fs.chmodSync(dest, '755');
+                    }
+                    resolve();
+                });
+            });
+        }).on('error', (err) => {
+            file.close(() => {
+                fs.unlink(dest);
+                reject(err.message);
+            });
+        });
     });
 }
 
@@ -421,6 +457,14 @@ module.exports = async (file, cb) => {
     }
     if (!cb) cb = () => { };
 
+    if (!fs.existsSync(lv_font_conv)) {
+        console.log('Downloading font converter');
+        cb(false, `Downloading font converter`);
+        await fileDownload(`http://dl.ioxgd.com/lv_font_conv-0.3.1/${path.basename(lv_font_conv)}`, lv_font_conv);
+        cb(false, `Downloaded font converter`);
+        console.log('Downloaded font converter');
+    }
+
     let header = "", code = "";
     
     // ----- Font Convart ----- //
@@ -432,7 +476,7 @@ module.exports = async (file, cb) => {
         header += `LV_FONT_DECLARE(${font.name});\n`;
 
         try {
-            let output = path.resolve(`${__dirname}\\..\\include\\codegen\\${font.name}.c`);
+            let output = path.resolve(`${__dirname}/../include/codegen/${font.name}.c`);
             if (fs.existsSync(output)) {
                 console.log(`${font.name} use cache file`);
                 cb(false, `${font.name} use cache file.`);
@@ -443,7 +487,7 @@ module.exports = async (file, cb) => {
                 cb(true, `${font.name} can't convert to C array, ${font.file} not found.`);
                 continue;
             }
-            let cmd = `"${__dirname}\\bin\\lv_font_conv_v0.3.1_x64.exe" --font "${font.file}" --bpp 4 --size ${font.size} -r ${font.range} --format lvgl --no-compress -o "${output}"`;
+            let cmd = `"${lv_font_conv}" --font "${font.file}" --bpp 4 --size ${font.size} -r ${font.range} --format lvgl --no-compress -o "${output}"`;
             // await execShellCommand(cmd);
             
             execShellCommand(cmd).then(async (stdout, stderr) => {
